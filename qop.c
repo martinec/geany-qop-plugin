@@ -26,16 +26,15 @@
 #include <stdlib.h>
 #include <geanyplugin.h>
 
-GeanyPlugin     *geany_plugin;
-GeanyData       *geany_data;
+GeanyPlugin     *geany_plugin = NULL;
+GeanyData       *geany_data  = NULL;
 static GtkWidget *main_menu_item = NULL;
-static const char * PLUGIN_NAME_QOP= "Quick Open File";
+static const char * PLUGIN_NAME_QOP= "Quick Open File Alt";
 static const int    WINDOW_SIZE= 500;
 
 int launch_widget(const int window_size);
 
 PLUGIN_VERSION_CHECK(1)
-PLUGIN_SET_INFO(PLUGIN_NAME_QOP, "Quick Open File (Edit->Pref.-> Key Bindings-> ","1.0", "Samy Badjoudj <samy.badjoudj@gmail.com>");
 
 enum
 {
@@ -73,16 +72,24 @@ static void qop_launch(G_GNUC_UNUSED guint key_id)
 
     launch_widget(WINDOW_SIZE);
 }
-void plugin_init(GeanyData *data)
+
+
+static gboolean plugin_qopalt_init(GeanyPlugin *plugin, G_GNUC_UNUSED gpointer pdata)
 {
+    geany_plugin = plugin;
+	  geany_data = plugin->geany_data;
     main_menu_item = gtk_menu_item_new_with_mnemonic(PLUGIN_NAME_QOP);
     gtk_widget_show(main_menu_item);
     gtk_container_add(GTK_CONTAINER(geany->main_widgets->tools_menu), main_menu_item);
     GeanyKeyGroup *key_group = plugin_set_key_group(geany_plugin,"quick_open_file", KB_COUNT, NULL);
     keybindings_set_item(key_group, KB_QUICK_OPEN_FILE, kb_activate, 0,0,"quick_open_file", PLUGIN_NAME_QOP, NULL);
     g_signal_connect(main_menu_item, "activate",G_CALLBACK(item_activate_cb), geany);
+
+    return TRUE;
 }
-void plugin_cleanup(void)
+
+
+static void plugin_qopalt_cleanup(G_GNUC_UNUSED GeanyPlugin *plugin, G_GNUC_UNUSED gpointer pdata)
 {
     gtk_widget_destroy(main_menu_item);
 }
@@ -236,4 +243,41 @@ int launch_widget(const int window_size)
     return 0;
 }
 
+/*
+static PluginCallback plugin_callbacks[] =
+{
+	{ "update-editor-menu", (GCallback) &ao_update_editor_menu_cb, FALSE, NULL },
+	{ "editor-notify", (GCallback) &ao_editor_notify_cb, TRUE, NULL },
+
+	{ "document-new", (GCallback) &ao_document_new_cb, TRUE, NULL },
+	{ "document-open", (GCallback) &ao_document_open_cb, TRUE, NULL },
+	{ "document-save", (GCallback) &ao_document_save_cb, TRUE, NULL },
+	{ "document-close", (GCallback) &ao_document_close_cb, TRUE, NULL },
+	{ "document-activate", (GCallback) &ao_document_activate_cb, TRUE, NULL },
+	{ "document-before-save", (GCallback) &ao_document_before_save_cb, TRUE, NULL },
+	{ "document-reload", (GCallback) &ao_document_reload_cb, TRUE, NULL },
+
+	{ "geany-startup-complete", (GCallback) &ao_startup_complete_cb, TRUE, NULL },
+
+	{ NULL, NULL, FALSE, NULL }
+};
+*/
+
+
+G_MODULE_EXPORT
+void geany_load_module(GeanyPlugin *plugin)
+{
+ plugin->info->name = PLUGIN_NAME_QOP;
+ plugin->info->description = "Quick Open File (Edit->Pref.-> Key Bindings-> ";
+ plugin->info->version = "1.0";
+ plugin->info->author = "Badjoudj S., Martinec C.";
+
+ plugin->funcs->init = plugin_qopalt_init;
+ plugin->funcs->configure = NULL;
+ plugin->funcs->help = NULL;
+ plugin->funcs->cleanup = plugin_qopalt_cleanup;
+ //plugin->funcs->callbacks = plugin_callbacks;
+
+ GEANY_PLUGIN_REGISTER(plugin, 226);
+}
 
